@@ -72,8 +72,10 @@ assume-role(){
 
   # DEFAULT VARIABLES
   ACCOUNTS_FILE=${ACCOUNTS_FILE:-~/.aws/accounts}
+  CONF_FILE=${CONF_FILE:-~/.aws/config}
   SESSION_TIMEOUT=43200
   ROLE_SESSION_TIMEOUT=3600
+  DEFAULT_ROLE="read"
 
   # Force use of ~/.aws/credentials file which contains aws login account
   unset AWS_ACCESS_KEY_ID
@@ -108,8 +110,15 @@ assume-role(){
     account_name="$account_name_input"
   fi
 
+  if [ -f "$CONF_FILE" ]; then
+    # role_arn=$(sed -ne ‘/^\s*[#;]/!{/^\s*\[‘$SECTION’\]/,/^\s*\[.*\]/ s/.*’$ITEM’\s*[ =]\s*\”\?\(.*\)[\”\n]/\1/p}’ $INIFILE )
+    role_input=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F'/' '{ print $2 }'`
+    account_id=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F':' '{ print $5 }'`
+    echo_out $role_input, $account_id
+  fi
+
   # set account_id
-  if [ -f "$ACCOUNTS_FILE" ]; then
+  if [ -f "$ACCOUNTS_FILE" ] && [ -z "$account_id"]; then
     account_id=$(jq ".[\"$account_name\"]" < "$ACCOUNTS_FILE" | jq --raw-output "select(. != null)")
   fi
 
@@ -126,9 +135,9 @@ assume-role(){
 
   # set role
   if [ -z "$role_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-    echo -n "Assume Into Role [read]: "
+    echo -n "Assume Into Role [$DEFAULT_ROLE]: "
     read -r role
-    role=${role:-"read"}
+    role=${role:-"$DEFAULT_ROLE"}
   else
     role="$role_input"
   fi
@@ -179,7 +188,7 @@ assume-role(){
     # We'll need a token to renew session
     if [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
       echo -n "MFA Token: "
-      read -r -s mfa_token
+      read -r mfa_token
     else
       mfa_token="$mfa_token_input"
     fi
