@@ -162,6 +162,7 @@ Then entering a MFA token on request.
 If you are using `zsh` you can get a sweet prompt by adding to your `.zshrc` file:
 
 ```bash
+source $(which assume-role)
 # AWS ACCOUNT NAME
 function aws_account_info {
   [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && echo "%F{blue}aws:(%f%F{red}$AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE%f%F{blue})%F$reset_color"
@@ -174,6 +175,8 @@ PROMPT=`echo $PROMPT | rev | sed 's/ / )ofni_tnuocca_swa($ /'| rev`
 For `bash` you could put the following in your `.bash_profile` file:
 
 ```bash
+source $(which assume-role)
+
 function aws_account_info {
   [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && echo -n "aws:($AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE) "
 }
