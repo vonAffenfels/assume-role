@@ -40,4 +40,4 @@ if ! chmod +x $location; then
   sudo chmod +x $location
 fi
 
-$sudo curl -L https://raw.githubusercontent.com/coinbase/assume-role/master/assume-role --output $location
+$sudo curl -L https://raw.githubusercontent.com/arvatoaws/assume-role/master/assume-role --output $location
