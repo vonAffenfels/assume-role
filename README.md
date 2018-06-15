@@ -172,6 +172,23 @@ function aws_account_info {
 PROMPT=`echo $PROMPT | rev | sed 's/ / )ofni_tnuocca_swa($ /'| rev`
 ```
 
+If you are using oh-my-zsh, a nice way to integrate this into the powerline segments (the relevant one being the custom_assume_role, the other segmenst are merely an example) would be to do the following:
+* Follow general assume-role instructions
+* Setup oh-my-zsh normally
+* git clone https://github.com/bhilburn/powerlevel9k.git ~/.oh-my-zsh/custom/themes/powerlevel9k
+* Add the following to your .zshrc
+```bash
+source $(which assume-role)
+export POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(root_indicator context dir dir_writable rbenv chruby nodeenv pyenv aws custom_assume_role vcs)
+export POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time background_jobs detect_virt disk_usage load ram time)
+
+export POWERLEVEL9K_CUSTOM_ASSUME_ROLE="echo \$AWS_ACCOUNT_NAME"
+export POWERLEVEL9K_CUSTOM_ASSUME_ROLE_FOREGROUND="black"
+export POWERLEVEL9K_CUSTOM_ASSUME_ROLE_BACKGROUND="yellow"
+
+ZSH_THEME="powerlevel9k/powerlevel9k"
+```
+
 For `bash` you could put the following in your `.bash_profile` file:
 
 ```bash
