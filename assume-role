@@ -75,6 +75,7 @@ assume-role(){
   CONF_FILE=${CONF_FILE:-~/.aws/config}
   SESSION_TIMEOUT=43200
   ROLE_SESSION_TIMEOUT=3600
+  DEFAULT_ACCOUNT="default"
   DEFAULT_ROLE="read"
 
   # Force use of ~/.aws/credentials file which contains aws login account
@@ -100,12 +101,16 @@ assume-role(){
     ROLE_SESSION_TIMEOUT=${AWS_ROLE_SESSION_TIMEOUT}
   fi
 
+  if [ "$AWS_ACCOUNT_NAME" ]; then
+    DEFAULT_ACCOUNT=${AWS_ACCOUNT_NAME}
+  fi
+
   # set account_name
   if [ -z "$account_name_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-    echo -n "Assume Into Account [default]:"
+    echo -n "Assume Into Account [$DEFAULT_ACCOUNT]:"
     read -r account_name
     # default
-    account_name=${account_name:-"default"}
+    account_name=${account_name:-"$DEFAULT_ACCOUNT"}
   else
     account_name="$account_name_input"
   fi
