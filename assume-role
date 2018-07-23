@@ -124,7 +124,7 @@ assume-role(){
   fi
 
   # set account_id
-  if [ -f "$ACCOUNTS_FILE" ] && [ -z "$account_id"]; then
+  if [ -f "$ACCOUNTS_FILE" ] && [ -z "$account_id" ]; then
     account_id=$(jq ".[\"$account_name\"]" < "$ACCOUNTS_FILE" | jq --raw-output "select(. != null)")
   fi
 
