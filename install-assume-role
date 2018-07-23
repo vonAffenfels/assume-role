@@ -6,7 +6,7 @@
 #
 # You can run it anywhere by executing:
 #
-#  curl https://raw.githubusercontent.com/coinbase/assume-role/master/install-assume-role | bash
+#  curl https://raw.githubusercontent.com/arvatoaws/assume-role/master/install-assume-role | bash
 
 set -euo pipefail
 
