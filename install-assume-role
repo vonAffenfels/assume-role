@@ -11,6 +11,7 @@
 set -euo pipefail
 
 location=/usr/local/bin/assume-role
+completer_location=~/zsh_functions
 sudo=""
 
 auth-sudo() {
@@ -41,3 +42,4 @@ if ! chmod +x $location; then
 fi
 
 $sudo curl -L https://raw.githubusercontent.com/arvatoaws/assume-role/master/assume-role --output $location
+curl -L https://raw.githubusercontent.com/arvatoaws/assume-role/master/_assume-role --output $completer_location

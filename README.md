@@ -172,6 +172,16 @@ function aws_account_info {
 PROMPT=`echo $PROMPT | rev | sed 's/ / )ofni_tnuocca_swa($ /'| rev`
 ```
 
+## Auto autocompleter
+
+If you want to have a autocompleter for the accounts from your aws-config add the following at the beginning of your `.zshrc` file:
+```
+fpath=(~/zsh_functions $fpath)
+
+autoload -U compinit
+compinit
+```
+
 If you are using oh-my-zsh, a nice way to integrate this into the powerline segments (the relevant one being the custom_assume_role, the other segmenst are merely an example) would be to do the following:
 * Follow general assume-role instructions
 * Setup oh-my-zsh normally
