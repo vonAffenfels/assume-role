@@ -30,6 +30,13 @@ if [ ! -d $(dirname $location) ]; then
   fi
 fi
 
+if [ ! -d $(dirname $completerlocation) ]; then
+  mkdir_cmd="mkdir -p $completer_location"
+  if ! $mkdir_cmd >/dev/null 2>&1; then
+    $mkdir_cmd
+  fi
+fi
+
 if ! touch $location; then
   auth-sudo
   sudo touch $location

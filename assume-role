@@ -116,10 +116,10 @@ assume-role(){
   fi
 
   if [ -f "$CONF_FILE" ]; then
-    # role_arn=$(sed -ne ‘/^\s*[#;]/!{/^\s*\[‘$SECTION’\]/,/^\s*\[.*\]/ s/.*’$ITEM’\s*[ =]\s*\”\?\(.*\)[\”\n]/\1/p}’ $INIFILE )
     role_input=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F'/' '{ print $2 }'`
     account_id=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F':' '{ print $5 }'`
     role_arn=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }'`
+    mfa_serial=`cat ~/.aws/config | sed -n "/^\[profile asy-prod\]/,/^\[.*\]/p" | grep "mfa_serial" | awk '{ print $3 }'`
     echo_out $role_input, $account_id
   fi
 
@@ -127,12 +127,10 @@ assume-role(){
   if [ -f "$ACCOUNTS_FILE" ] && [ -z "$account_id" ]; then
     account_id=$(jq ".[\"$account_name\"]" < "$ACCOUNTS_FILE" | jq --raw-output "select(. != null)")
   fi
-
   # If cant find the alias then set the input as the account id
   if [ -z "$account_id" ]; then
     account_id=$account_name
   fi
-
   # Validate Account ID
   if [[ ! $account_id =~ ^[0-9]{12}$ ]]; then
     echo_out "account_id \"$account_id\" is incorrectly formatted AWS account id"
@@ -147,12 +145,10 @@ assume-role(){
   else
     role="$role_input"
   fi
-
   if [ -z "$role" ]; then
     echo_out "role not defined"
     return
   fi
-
   if [ -z "$role_arn" ]; then
     role_arn="arn:aws:iam::${account_id}:role/${role}"
   fi
@@ -175,12 +171,10 @@ assume-role(){
   elif [ ! -z "$AWS_CONFIG_REGION" ]; then
     region=$AWS_CONFIG_REGION
   fi
-
   if [ -z "$region" ]; then
     echo_out "region not defined"
     return
   fi
-
   AWS_REGION="$region"
   AWS_DEFAULT_REGION="$region"
 
@@ -193,8 +187,8 @@ assume-role(){
   ABOUT_SESSION_TIMEOUT=$((SESSION_TIMEOUT - 200))
   SESSION_TIMEOUT_DELTA=$((NOW - AWS_SESSION_START))
 
-  # if session doesn't exist, or is expired
-  if [ "$ABOUT_SESSION_TIMEOUT" -lt "$SESSION_TIMEOUT_DELTA" ]; then
+  if [ "$ROLE_SESSION_TIMEOUT" -gt 3600 ] || [ "$ABOUT_SESSION_TIMEOUT" -lt "$SESSION_TIMEOUT_DELTA" ]; then
+
     # We'll need a token to renew session
     if [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
       echo -n "MFA Token: "
@@ -211,53 +205,74 @@ assume-role(){
     # get the username attached to your default creds
     AWS_USERNAME=$(aws iam get-user --query User.UserName --output text --profile $default_profile)
 
-    # get MFA device attached to default creds
-    MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
-    MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
-    MFA_DEVICE_ARGS+=(--output text)
-    MFA_DEVICE_ARGS+=(--profile "${default_profile}")
-    MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
-    MFA_DEVICE_STATUS=$?
+    if [ -z "$mfa_serial" ]; then
+      # get MFA device attached to default creds
+      MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
+      MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
+      MFA_DEVICE_ARGS+=(--output text)
+      MFA_DEVICE_ARGS+=(--profile "${default_profile}")
+      MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
+      MFA_DEVICE_STATUS=$?
 
-    if [ $MFA_DEVICE_STATUS -ne 0 ]; then
-      echo_out "aws iam list-mfa-devices error"
-      return
+      if [ $MFA_DEVICE_STATUS -ne 0 ]; then
+        echo_out "aws iam list-mfa-devices error"
+        return
+      fi
+    else
+      MFA_DEVICE=$mfa_serial
     fi
 
-    # 12 hour MFA w/ Session Token, which can then be reused
-    SESSION_ARGS=(--duration-seconds "$SESSION_TIMEOUT")
-    SESSION_ARGS+=(--serial-number "${MFA_DEVICE}")
-    SESSION_ARGS+=(--token-code "${mfa_token}")
-    SESSION_ARGS+=(--profile "${default_profile}")
+    # if session doesn't exist, or is expired
+    if [ "$ABOUT_SESSION_TIMEOUT" -lt "$SESSION_TIMEOUT_DELTA" ] && [ "$ROLE_SESSION_TIMEOUT" -le 3600 ]; then
 
-    SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}")
+      # 12 hour MFA w/ Session Token, which can then be reused
+      SESSION_ARGS=(--duration-seconds "$SESSION_TIMEOUT")
+      SESSION_ARGS+=(--serial-number "${MFA_DEVICE}")
+      SESSION_ARGS+=(--token-code "${mfa_token}")
+      SESSION_ARGS+=(--profile "${default_profile}")
 
-    SESSION_STATUS=$?
+      SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}")
+      SESSION_STATUS=$?
 
-    if [ $SESSION_STATUS -ne 0 ]; then
-      echo_out "aws sts get-session-token error"
-      return
+      if [ $SESSION_STATUS -ne 0 ]; then
+        echo_out "aws sts get-session-token error"
+        return
+      fi
+
+      # Save Primary Credentials
+      AWS_SESSION_START=$NOW
+      AWS_SESSION_ACCESS_KEY_ID=$(echo "$SESSION" | jq -r .Credentials.AccessKeyId)
+      AWS_SESSION_SECRET_ACCESS_KEY=$(echo "$SESSION" | jq -r .Credentials.SecretAccessKey)
+      AWS_SESSION_SESSION_TOKEN=$(echo "$SESSION" | jq -r .Credentials.SessionToken)
+      AWS_SESSION_SECURITY_TOKEN=$AWS_SESSION_SESSION_TOKEN
     fi
 
-    # Save Primary Credentials
-    AWS_SESSION_START=$NOW
-    AWS_SESSION_ACCESS_KEY_ID=$(echo "$SESSION" | jq -r .Credentials.AccessKeyId)
-    AWS_SESSION_SECRET_ACCESS_KEY=$(echo "$SESSION" | jq -r .Credentials.SecretAccessKey)
-    AWS_SESSION_SESSION_TOKEN=$(echo "$SESSION" | jq -r .Credentials.SessionToken)
-    AWS_SESSION_SECURITY_TOKEN=$AWS_SESSION_SESSION_TOKEN
+
+
   fi
 
   # Use the Session in the login account
-  export AWS_ACCESS_KEY_ID=$AWS_SESSION_ACCESS_KEY_ID
-  export AWS_SECRET_ACCESS_KEY=$AWS_SESSION_SECRET_ACCESS_KEY
-  export AWS_SESSION_TOKEN=$AWS_SESSION_SESSION_TOKEN
-  export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
+  if [ "$ROLE_SESSION_TIMEOUT" -le 3600 ]; then
+    echo "Setting session vars active"
+    export AWS_ACCESS_KEY_ID=$AWS_SESSION_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY=$AWS_SESSION_SECRET_ACCESS_KEY
+    export AWS_SESSION_TOKEN=$AWS_SESSION_SESSION_TOKEN
+    export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
+  fi
 
   # Now drop into a role using session token's long-lived MFA
   ROLE_SESSION_ARGS=(--role-arn "${role_arn}")
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
-  ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")
+  ROLE_SESSION_ARGS+=(--role-session-name "${USER}-$(date +%s)")
+
+  if [ "${ROLE_SESSION_TIMEOUT}" -gt 3600 ]; then
+    echo_out "Enforce MFA caused by longer session duration"
+    ROLE_SESSION_ARGS+=(--serial-number "${MFA_DEVICE}")
+    ROLE_SESSION_ARGS+=(--token-code "${mfa_token}")
+  fi
+
+  echo_out $ROLE_SESSION_ARGS
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
 
   if [ "$ROLE_SESSION" = "fail" ]; then
