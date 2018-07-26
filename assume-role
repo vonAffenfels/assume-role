@@ -253,7 +253,7 @@ assume-role(){
 
   # Use the Session in the login account
   if [ "$ROLE_SESSION_TIMEOUT" -le 3600 ]; then
-    echo "Setting session vars active"
+    # echo "Setting session vars active"
     export AWS_ACCESS_KEY_ID=$AWS_SESSION_ACCESS_KEY_ID
     export AWS_SECRET_ACCESS_KEY=$AWS_SESSION_SECRET_ACCESS_KEY
     export AWS_SESSION_TOKEN=$AWS_SESSION_SESSION_TOKEN
@@ -272,7 +272,6 @@ assume-role(){
     ROLE_SESSION_ARGS+=(--token-code "${mfa_token}")
   fi
 
-  echo_out $ROLE_SESSION_ARGS
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
 
   if [ "$ROLE_SESSION" = "fail" ]; then
