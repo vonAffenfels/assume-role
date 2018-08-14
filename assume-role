@@ -117,10 +117,19 @@ assume-role(){
 
   if [ -f "$CONF_FILE" ]; then
     role_input=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F'/' '{ print $2 }'`
-    account_id=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F':' '{ print $5 }'`
-    role_arn=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }'`
-    mfa_serial=`cat ~/.aws/config | sed -n "/^\[profile asy-prod\]/,/^\[.*\]/p" | grep "mfa_serial" | awk '{ print $3 }'`
+
+    if [ -z "$role_input" ] && [ "$role_input" != '' ]; then
+      account_id=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F':' '{ print $5 }'`
+      role_arn=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }'`
+      mfa_serial=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "mfa_serial" | awk '{ print $3 }'`
+    else
+      account_id="$account_name_input"
+      echo "Using Input as Account-ID instead of name"
+      role_arn=`cat $CONF_FILE | grep "$account_id" | awk '{print $3 }'`
+      role_input=`cat $CONF_FILE | grep "$account_id" | awk '{print $3 }' | awk -F'/' '{ print $2 }'`
+    fi
     echo_out $role_input, $account_id
+
   fi
 
   # set account_id
@@ -247,8 +256,6 @@ assume-role(){
       AWS_SESSION_SECURITY_TOKEN=$AWS_SESSION_SESSION_TOKEN
     fi
 
-
-
   fi
 
   # Use the Session in the login account
@@ -282,6 +289,7 @@ assume-role(){
     AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
     AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
     AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
+    AWS_SESSION_END=$(echo "$ROLE_SESSION" | jq -r .Credentials.Expiration)
     AWS_SECURITY_TOKEN=$AWS_SESSION_TOKEN
     AWS_ACCOUNT_ID="$account_id"
     AWS_ACCOUNT_NAME="$account_name"
