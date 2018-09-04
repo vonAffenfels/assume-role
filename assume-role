@@ -118,7 +118,7 @@ assume-role(){
   if [ -f "$CONF_FILE" ]; then
     role_input=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F'/' '{ print $2 }'`
 
-    if [ -z "$role_input" ] && [ "$role_input" != '' ]; then
+    if [ -z "$role_input" ] || [ "$role_input" != '' ]; then
       account_id=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F':' '{ print $5 }'`
       role_arn=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }'`
       mfa_serial=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "mfa_serial" | awk '{ print $3 }'`
