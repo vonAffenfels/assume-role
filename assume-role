@@ -163,7 +163,11 @@ assume-role(){
   fi
 
   # set region
-  AWS_CONFIG_REGION="$(aws configure get region --profile ${default_profile})"
+  AWS_CONFIG_REGION="$(aws configure get region --profile ${account_name})"
+  if [ -z  "$AWS_CONFIG_REGION" ]; then
+    AWS_CONFIG_REGION="$(aws configure get region --profile ${default_profile})"
+  fi
+
   if [ -z "$aws_region_input" ] && [ -z "$AWS_REGION" ] && [ -z "$AWS_DEFAULT_REGION" ] && [ -z "$AWS_CONFIG_REGION" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
     echo -n "Assume Into Region [us-east-1]: "
     read -r region
