@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export user_clean=$(printf '%s' $USER | tr -d '\\')
+
 # START USAGE DOCUMENTATION
 # assume-role is a command line tool to help assume roles through a bastion account with MFA.
 # Store your bastion account credentials here ~/.aws/credentials
@@ -327,7 +329,7 @@ EOF
   ROLE_SESSION_ARGS=(--role-arn "${role_arn}")
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
-  ROLE_SESSION_ARGS+=(--role-session-name "${USER}-$(date +%s)")
+  ROLE_SESSION_ARGS+=(--role-session-name "${user_clean}-$(date +%s)")
 
   if [ "${ROLE_SESSION_TIMEOUT}" -gt 3600 ]; then
     echo_out "Enforce MFA caused by longer session duration"
