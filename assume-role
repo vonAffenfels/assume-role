@@ -361,7 +361,7 @@ EOF
   eks_clusters=$(aws eks list-clusters --query 'clusters[*]' --output text)
   count_clusters=$(echo -n "$eks_clusters" | grep -c '^')
   if [ $count_clusters -eq 1 ]; then
-    echo_out "\ufd31 Switch to: $eks_clusters"
+    echo_out "\ufd31 Switch to $eks_clusters"
     aws eks update-kubeconfig --name $eks_clusters --alias $eks_clusters
   elif [ $count_clusters -gt 1 ]; then
     echo_out "More than one EKS Cluster is not implemented yet"
