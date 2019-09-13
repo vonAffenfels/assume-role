@@ -353,7 +353,7 @@ EOF
     AWS_ACCOUNT_ROLE="$role"
     GEO_ENV="$account_name" # For GeoEngineer https://github.com/coinbase/geoengineer
     AWS_STS_ROLE_ARN="$role_arn"
-    echo_out "Success! IAM session envars are exported."
+    # echo_out "Success! IAM session envars are exported."
     echo "\uf65f switched role"
   fi
 
