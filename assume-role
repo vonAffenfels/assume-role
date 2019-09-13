@@ -180,7 +180,6 @@ EOF
       role_input=`cat $CONF_FILE | grep "$account_id" | awk '{print $3 }' | awk -F'/' '{ print $2 }'`
     fi
    # echo_out $role_input, $account_id
-
   fi
 
   # set account_id
@@ -356,6 +355,18 @@ EOF
     AWS_STS_ROLE_ARN="$role_arn"
     echo_out "Success! IAM session envars are exported."
     echo "\uf65f switched role"
+  fi
+
+  # Switch to EKS Cluster
+  eks_clusters=$(aws eks list-clusters --query 'clusters[*]' --output text)
+  count_clusters=$(echo -n "$eks_clusters" | grep -c '^')
+  if [ $count_clusters -eq 1 ]; then
+    echo_out "\ufd31 Switch to: $eks_clusters"
+    aws eks update-kubeconfig --name $eks_clusters --alias $eks_clusters
+  elif [ $count_clusters -gt 1 ]; then
+    echo_out "More than one EKS Cluster is not implemented yet"
+  else
+    echo_out "No EKS Cluster found. ignoring ..."
   fi
 
   # OUTPUTS ALL THE EXPORTS for eval $(assume-role [args])
