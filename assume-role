@@ -169,10 +169,15 @@ EOF
   if [ -f "$CONF_FILE" ]; then
     role_input=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F'/' '{ print $2 }'`
 
-    if [ -z "$role_input" ] || [ "$role_input" != '' ]; then
+    if [ ! -z "$role_input" ] && [ "$role_input" != '' ]; then
       account_id=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F':' '{ print $5 }'`
       role_arn=`aws configure get role_arn --profile $account_name`
       mfa_serial=`aws configure get mfa_serial --profile $account_name`
+      source_profile_config=`aws configure get source_profile --profile $account_name || echo ''`
+      if [ ! -z "$source_profile_config" ] && [ "$source_profile_config" != '' ]; then
+        echo_out "Using source profile $source_profile_config"
+        default_profile=$source_profile_config
+      fi
     else
       account_id="$account_name_input"
       echo_out "Using Input as Account-ID instead of name"
@@ -277,7 +282,7 @@ EOF
       MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
       MFA_DEVICE_ARGS+=(--output text)
       MFA_DEVICE_ARGS+=(--profile "${default_profile}")
-      MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}" --output json)
+      MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
       MFA_DEVICE_STATUS=$?
 
       if [ $MFA_DEVICE_STATUS -ne 0 ]; then
