@@ -28,7 +28,7 @@ brew upgrade assume-role
 You can install/upgrade assume-role with this command:
 
 ```bash
-curl https://raw.githubusercontent.com/arvatoaws/assume-role/master/install-assume-role -O
+curl https://raw.githubusercontent.com/arvatoaws-labs/assume-role/master/install-assume-role -O
 cat install-assume-role # inspect the script for security
 bash ./install-assume-role # install assume-role
 ```
