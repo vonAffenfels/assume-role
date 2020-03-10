@@ -364,12 +364,37 @@ EOF
 
   # Switch to EKS Cluster
   eks_clusters=$(aws eks list-clusters --query 'clusters[*]' --output text)
-  count_clusters=$(echo -n "$eks_clusters" | grep -c '^')
-  if [ $count_clusters -eq 1 ]; then
+  #count_clusters=$(echo -n "$eks_clusters" | grep -c '^')
+  cluster_array=($(echo $eks_clusters | tr "\t" "\n"))
+
+  eks_menu ()
+  {
+    arrsize=$1
+    # echo "Size of array: $arrsize"
+    echo_out "${@:2}"
+    select option in "${@:2}"; do
+      if [ "$REPLY" -gt "$arrsize" ];
+      then
+        echo_out "Exiting..."
+        break;
+      elif [ 1 -le "$REPLY" ] && [ "$REPLY" -le $((arrsize)) ];
+      then
+        # echo "You selected $option which is option $REPLY"
+        echo_out "\ufd31 Switch to $option"
+        aws eks update-kubeconfig --name $option --alias $option
+        break;
+      else
+        echo_out "Incorrect Input: Select a number 1-$arrsize"
+      fi
+    done
+  }
+
+  if [ ${#cluster_array[@]} -eq 1 ]; then
     echo_out "\ufd31 Switch to $eks_clusters"
     aws eks update-kubeconfig --name $eks_clusters --alias $eks_clusters
-  elif [ $count_clusters -gt 1 ]; then
-    echo_out "More than one EKS Cluster is not implemented yet"
+  elif [ ${#cluster_array[@]} -gt 1 ]; then
+    # echo_out "More than one EKS Cluster is not implemented yet"
+    eks_menu "${#cluster_array[@]}" "${cluster_array[@]}"
   else
     echo_out "No EKS Cluster found. ignoring ..."
   fi
