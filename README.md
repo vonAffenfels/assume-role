@@ -211,6 +211,32 @@ function aws_account_info {
 PROMPT_COMMAND='aws_account_info'
 ```
 
+## YubiKey Integration
+
+# Prerequisites
+You have to install ykman for your distribution
+
+# Installation
+
+If you want to use your YubiKey as MFA, there is the feature to use the oath Feature of Yubikey:
+
+You have to add your MFA Hash to oath:
+
+```bash
+ykman oath add -t NameOfYourChoice <YOUR_BASE_32_KEY>
+```
+
+After that you can add the following ENV Variable to your profile:
+
+```bash
+export YUBIKEY_MFA="NameOfYourChoice"
+```
+
+# Usage
+
+Now, when assume-role needs a MFA it will ask you to Touch your YubiKey
+
+
 ## Testing
 
 assume-role is tested with [BATS](https://github.com/sstephenson/bats) (Bash Automated Testing System). To run the tests first you will need `bats`, `jq` and `shellcheck` installed. On macOS this can be accomplished with `brew`:
