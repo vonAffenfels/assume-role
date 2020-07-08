@@ -213,10 +213,10 @@ PROMPT_COMMAND='aws_account_info'
 
 ## YubiKey Integration
 
-# Prerequisites
+### Prerequisites
 You have to install ykman for your distribution
 
-# Installation
+### Installation
 
 If you want to use your YubiKey as MFA, there is the feature to use the oath Feature of Yubikey:
 
@@ -232,7 +232,7 @@ After that you can add the following ENV Variable to your profile:
 export YUBIKEY_MFA="NameOfYourChoice"
 ```
 
-# Usage
+### Usage
 
 Now, when assume-role needs a MFA it will ask you to Touch your YubiKey
 
