@@ -265,7 +265,7 @@ EOF
       echo -n "MFA Token: "
       read -r mfa_token
     elif [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-      YUBIKEY_MFA=$(ykman oath code "$YUBIKEY_ASSUME_KEY" | awk '{ print $2 }')
+      YUBIKEY_MFA=$(ykman oath code "$YUBIKEY_ASSUME_KEY" | awk '{print $NF}')
       mfa_token="$YUBIKEY_MFA"
     else
       mfa_token="$mfa_token_input"
