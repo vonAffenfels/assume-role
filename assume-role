@@ -266,6 +266,7 @@ EOF
       read -r mfa_token
     elif [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
       YUBIKEY_MFA=$(ykman oath code "$YUBIKEY_ASSUME_KEY" | awk '{ print $2 }')
+      echo_out "Using MFA-Key $YUBIKEY_MFA"
       mfa_token="$YUBIKEY_MFA"
     else
       mfa_token="$mfa_token_input"
@@ -374,7 +375,7 @@ EOF
   {
     arrsize=$1
     # echo "Size of array: $arrsize"
-    echo_out "${@:2}"
+    # echo_out "${@:2}"
     select option in "${@:2}"; do
       if [ "$REPLY" -gt "$arrsize" ];
       then
@@ -398,7 +399,7 @@ EOF
     export KUBECONFIG="$HOME/.kube/$AWS_ACCOUNT_ID-$eks_clusters"
     aws eks update-kubeconfig --name $eks_clusters --alias $eks_clusters
   elif [ ${#cluster_array[@]} -gt 1 ]; then
-    # echo_out "More than one EKS Cluster is not implemented yet"
+    echo_out "More than one EKS Cluster found. Select:"
     eks_menu "${#cluster_array[@]}" "${cluster_array[@]}"
   else
     echo_out "No EKS Cluster found. ignoring ..."
