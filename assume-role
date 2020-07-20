@@ -249,6 +249,16 @@ EOF
   AWS_REGION="$region"
   AWS_DEFAULT_REGION="$region"
 
+  # set external ID
+  AWS_CONFIG_EXTERNAL_ID="$(aws configure get external_id --profile ${account_name})"
+  if [ ! -z "$AWS_CONFIG_EXTERNAL_ID" ]; then
+    # echo_out "External ID from config $AWS_CONFIG_EXTERNAL_ID"
+    external_id="$AWS_CONFIG_EXTERNAL_ID"
+  else
+    # echo_out "Fall-back: Use account ID as external ID: ${account_id}"
+    external_id="${account_id}"
+  fi
+
   # Activate our session
   NOW=$(date +"%s")
   if [ -z "$AWS_SESSION_START" ]; then
@@ -335,7 +345,7 @@ EOF
 
   # Now drop into a role using session token's long-lived MFA
   ROLE_SESSION_ARGS=(--role-arn "${role_arn}")
-  ROLE_SESSION_ARGS+=(--external-id "${account_id}")
+  ROLE_SESSION_ARGS+=(--external-id "${external_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
   ROLE_SESSION_ARGS+=(--role-session-name "${user_clean}-$(date +%s)")
 
