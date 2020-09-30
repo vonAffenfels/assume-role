@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export user_clean=$(printf '%s' $USER | tr -d '\\')
+export user_clean=$(cat ~/.okta_aws_login_config | grep okta_username | awk '{ print $3; }')
 
 # START USAGE DOCUMENTATION
 # assume-role-okta is a command line tool to help assume roles through a bastion account.
@@ -195,7 +195,7 @@ EOF
   ROLE_SESSION_ARGS=(--role-arn "${role_arn}")
   ROLE_SESSION_ARGS+=(--profile "${source_profile_config}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
-  ROLE_SESSION_ARGS+=(--role-session-name "${user_clean}-$(date +%s)")
+  ROLE_SESSION_ARGS+=(--role-session-name "${user_clean}")
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" --output json || echo "fail")
 
   if [ "$ROLE_SESSION" = "fail" ]; then
