@@ -114,6 +114,10 @@ EOF
   unset AWS_SESSION_TOKEN
   unset AWS_SECURITY_TOKEN
 
+  if [ "$AWS_ACCOUNT_NAME" ]; then
+    DEFAULT_ACCOUNT=${AWS_ACCOUNT_NAME}
+  fi
+
   # set account_name
   if [ -z "$account_name_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
     echo -n "Assume Into Account [$DEFAULT_ACCOUNT]:"
