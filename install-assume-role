@@ -30,7 +30,7 @@ if [ ! -d $(dirname $location) ]; then
   fi
 fi
 
-if [ ! -d $(dirname $completerlocation) ]; then
+if [ ! -d $(dirname $completer_location) ]; then
   mkdir_cmd="mkdir -p $completer_location"
   if ! $mkdir_cmd >/dev/null 2>&1; then
     $mkdir_cmd
