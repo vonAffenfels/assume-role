@@ -397,6 +397,7 @@ EOF
         echo_out "\ufd31 Switch to $option"
         export KUBECONFIG="$HOME/.kube/$AWS_ACCOUNT_ID-$option"
         aws eks update-kubeconfig --name $option --alias $option
+        chmod 0600 $KUBECONFIG
         break;
       else
         echo_out "Incorrect Input: Select a number 1-$arrsize"
@@ -408,6 +409,7 @@ EOF
     echo_out "\ufd31 Switch to $eks_clusters"
     export KUBECONFIG="$HOME/.kube/$AWS_ACCOUNT_ID-$eks_clusters"
     aws eks update-kubeconfig --name $eks_clusters --alias $eks_clusters
+    chmod 0600 $KUBECONFIG
   elif [ ${#cluster_array[@]} -gt 1 ]; then
     echo_out "More than one EKS Cluster found. Select:"
     eks_menu "${#cluster_array[@]}" "${cluster_array[@]}"
