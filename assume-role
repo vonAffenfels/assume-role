@@ -129,6 +129,10 @@ EOF
   DEFAULT_ACCOUNT="default"
   DEFAULT_ROLE="read"
 
+  if [ -z  "$AWS_PAGER" ]; then
+    export AWS_PAGER="cat"
+  fi
+
   # Force use of ~/.aws/credentials file which contains aws login account
   unset AWS_ACCESS_KEY_ID
   unset AWS_SECRET_ACCESS_KEY
