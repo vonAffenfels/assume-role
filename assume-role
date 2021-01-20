@@ -185,8 +185,15 @@ EOF
     else
       account_id="$account_name_input"
       echo_out "Using Input as Account-ID instead of name"
-      role_arn=`cat $CONF_FILE | grep "$account_id" | awk '{print $3 }'`
-      role_input=`cat $CONF_FILE | grep "$account_id" | awk '{print $3 }' | awk -F'/' '{ print $2 }'`
+      echo_out "Trying to find Account-ID in config-file"
+      find_account=`cat $CONF_FILE | grep "$account_id" | wc -l`
+      if [[ $find_account == 1 ]]; then
+        role_arn=`cat $CONF_FILE | grep "$account_id" | awk '{print $3 }'`
+        role_input=`cat $CONF_FILE | grep "$account_id" | awk '{print $3 }' | awk -F'/' '{ print $2 }'`
+        account_name=`tac ~/.aws/config | grep -B 20 "$account_id" | grep "\[profile" | sed "s/\]$//" | awk '{print $2 }' | head -n1`
+      else
+        echo_out "Account-ID not found or multiple"
+      fi
     fi
    # echo_out $role_input, $account_id
   fi
