@@ -8,9 +8,31 @@ Assume IAM roles through an **AWS Bastion** account with **MFA** via the command
 
 ## Installation
 
+### Requirements
+
 `assume-role` requires [`jq`](https://stedolan.github.io/jq/) and [`aws`](https://aws.amazon.com/cli/) CLI tools to be installed.
 
-### via Homebrew (macOS)
+### Bash
+
+1. Clone Repository
+2. For easier updates create a symlink from your repository `assume-role` or `assume-role-okta` file to `/usr/local/bin/<assume-role>`
+   
+    **Example**
+
+    ```bash
+    ln -s <Git-Repository>/assume-role-okta /usr/local/bin/assume-role-okta
+    ```
+
+3. Add execution permissions
+   
+   ```bash
+   chmod +x <Git-Repository>/assume-role-okta
+   ```
+
+
+
+
+<!-- ### via Homebrew (macOS)
 
 ```bash
 brew tap arvatoaws/assume-role
@@ -21,9 +43,9 @@ You can then upgrade at any time by running:
 
 ```bash
 brew upgrade assume-role
-```
+``` -->
 
-### via Bash (Linux/macOS)
+<!-- ### via Bash (Linux/macOS)
 
 You can install/upgrade assume-role with this command:
 
@@ -33,7 +55,7 @@ cat install-assume-role # inspect the script for security
 bash ./install-assume-role # install assume-role
 ```
 
-It will ask for your sudo password if necessary.
+It will ask for your sudo password if necessary. -->
 
 ## Getting Started
 
@@ -47,7 +69,7 @@ eval $(assume-role account-id role mfa-token)
 
 If your shell supports bash functions (e.g. zsh) then you can add `source $(which assume-role)` to your `rc` file (e.g. `~/.zshrc`), then you can call `assume-role` like:
 
-```bash
+<!-- ```bash
 assume-role [account-id] [role] [mfa-token]
 ```
 
@@ -155,9 +177,9 @@ You can assume the `read` role in **Production** by running:
 assume-role 123456789012 read
 ```
 
-Then entering a MFA token on request.
+Then entering a MFA token on request. -->
 
-## Prompt
+<!-- ## Prompt
 
 If you are using `zsh` you can get a sweet prompt by adding to your `.zshrc` file:
 
@@ -170,22 +192,35 @@ function aws_account_info {
 
 # )ofni_tnuocca_swa($ is $(aws_account_info) backwards
 PROMPT=`echo $PROMPT | rev | sed 's/ / )ofni_tnuocca_swa($ /'| rev`
-```
+``` -->
 
 ## Auto autocompleter
 
 If you want to have a autocompleter for the accounts from your aws-config add the following at the beginning of your `.zshrc` file:
+
+### ZSH
+Copy/link zsh function
+
+```bash
+ln -s <Git-Repository>/_assume_role ~/zsh_functions/_assume_role
 ```
+### Bash
+```bash
 fpath=(~/zsh_functions $fpath)
 
 autoload -U compinit
 compinit
 ```
 
+## ZSH Segments
 If you are using oh-my-zsh, a nice way to integrate this into the powerline segments (the relevant one being the custom_assume_role, the other segmenst are merely an example) would be to do the following:
 * Follow general assume-role instructions
 * Setup oh-my-zsh normally
-* git clone https://github.com/bhilburn/powerlevel9k.git ~/.oh-my-zsh/custom/themes/powerlevel9k
+* Install Powerlevel10k Theme (https://github.com/romkatv/powerlevel10k#oh-my-zsh)
+* Configure p10k (https://github.com/romkatv/powerlevel10k#get-started)
+```bash
+p10k configure
+```
 * Add the following to your .zshrc
 ```bash
 source $(which assume-role)
@@ -199,6 +234,8 @@ export POWERLEVEL9K_CUSTOM_ASSUME_ROLE_BACKGROUND="yellow"
 ZSH_THEME="powerlevel9k/powerlevel9k"
 ```
 
+
+### Bash
 For `bash` you could put the following in your `.bash_profile` file:
 
 ```bash
@@ -210,6 +247,7 @@ function aws_account_info {
 
 PROMPT_COMMAND='aws_account_info'
 ```
+
 
 ## YubiKey Integration
 
@@ -237,7 +275,7 @@ export YUBIKEY_MFA="NameOfYourChoice"
 Now, when assume-role needs a MFA it will ask you to Touch your YubiKey
 
 
-## Testing
+<!-- ## Testing
 
 assume-role is tested with [BATS](https://github.com/sstephenson/bats) (Bash Automated Testing System). To run the tests first you will need `bats`, `jq` and `shellcheck` installed. On macOS this can be accomplished with `brew`:
 
@@ -247,4 +285,4 @@ brew install jq
 brew install shellcheck
 ```
 
-Then run `bats test/assume-role.bats`;
+Then run `bats test/assume-role.bats`; -->
