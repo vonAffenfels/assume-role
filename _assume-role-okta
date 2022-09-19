@@ -1,0 +1,3 @@
+#compdef assume-role-okta
+
+_arguments "1: :($(cat $HOME/.aws/config | grep '\[profile' | awk '{ print $2 }' | tr ']\n' ' '))"
