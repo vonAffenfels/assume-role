@@ -133,7 +133,7 @@ EOF
   fi
 
   if [ -f "$CONF_FILE" ]; then
-    role_input=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F'/' '{ print $2 }'`
+    role_input=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | cut -d "=" -f2 | awk -F'/' '{ print $2 }'`
 
     if [ ! -z "$role_input" ] && [ "$role_input" != '' ]; then
       account_id=`cat $CONF_FILE | sed -n "/^\[profile $account_name\]/,/^\[.*\]/p" | grep "role_arn" | awk '{ print $3 }' | awk -F':' '{ print $5 }'`
