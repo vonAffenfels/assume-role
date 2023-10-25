@@ -30,6 +30,10 @@ echo_out() {
   fi
 }
 
+redis-cli(){
+  docker exec assume-role-redis redis-cli "$@" 2>&1 > /dev/null
+}
+
 start-redis(){
   if ! docker volume ls | grep -q assume-role-redis-volume
   then docker volume create assume-role-redis-volume
@@ -43,7 +47,8 @@ start-redis(){
   then return
   fi
 
-  docker run --name assume-role-redis --network assume-role-redis-network -v "assume-role-redis-volume:/data" --restart always -d redis:7.2
+  docker run --name assume-role-redis --network assume-role-redis-network -v "assume-role-redis-volume:/data" --restart always -d redis:7.2 2>&1 > /dev/null
+  redis-cli config set notify-keyspace-events KEA
 }
 
 set-redis() {
@@ -51,8 +56,9 @@ set-redis() {
     return
   fi
 
-  docker exec assume-role-redis redis-cli SET "$@" 2>&1 > /dev/null
+  redis-cli SET "$@"
 }
+
 
 assume-role(){
   #######
@@ -519,23 +525,23 @@ EOF
     echo "AWS_STS_ROLE_ARN=\"$role_arn\";"
   fi
 
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_REGION" $AWS_REGION
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_DEFAULT_REGION" $AWS_DEFAULT_REGION
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_ACCESS_KEY_ID" $AWS_ACCESS_KEY_ID
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SECRET_ACCESS_KEY" $AWS_SECRET_ACCESS_KEY
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SESSION_TOKEN" $AWS_SESSION_TOKEN
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_ACCOUNT_ID" $AWS_ACCOUNT_ID
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_ACCOUNT_NAME" $AWS_ACCOUNT_NAME
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_ACCOUNT_ROLE" $AWS_ACCOUNT_ROLE
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SESSION_ACCESS_KEY_ID" $AWS_SESSION_ACCESS_KEY_ID
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SESSION_SECRET_ACCESS_KEY" $AWS_SESSION_SECRET_ACCESS_KEY
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SESSION_SESSION_TOKEN" $AWS_SESSION_SESSION_TOKEN
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SESSION_SECURITY_TOKEN" $AWS_SESSION_SESSION_TOKEN
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SESSION_START" $AWS_SESSION_START
-  set-redis "${AWS_ACCOUNT_NAME}.GEO_ENV" $GEO_ENV
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_PROFILE_ASSUME_ROLE" $AWS_PROFILE_ASSUME_ROLE
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_SECURITY_TOKEN" $AWS_SESSION_TOKEN
-  set-redis "${AWS_ACCOUNT_NAME}.AWS_STS_ROLE_ARN" $role_arn
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_REGION" $AWS_REGION
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_DEFAULT_REGION" $AWS_DEFAULT_REGION
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_ACCESS_KEY_ID" $AWS_ACCESS_KEY_ID
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SECRET_ACCESS_KEY" $AWS_SECRET_ACCESS_KEY
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SESSION_TOKEN" $AWS_SESSION_TOKEN
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_ACCOUNT_ID" $AWS_ACCOUNT_ID
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_ACCOUNT_NAME" $AWS_ACCOUNT_NAME
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_ACCOUNT_ROLE" $AWS_ACCOUNT_ROLE
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SESSION_ACCESS_KEY_ID" $AWS_SESSION_ACCESS_KEY_ID
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SESSION_SECRET_ACCESS_KEY" $AWS_SESSION_SECRET_ACCESS_KEY
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SESSION_SESSION_TOKEN" $AWS_SESSION_SESSION_TOKEN
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SESSION_SECURITY_TOKEN" $AWS_SESSION_SESSION_TOKEN
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SESSION_START" $AWS_SESSION_START
+  set-redis "${AWS_ACCOUNT_NAME}/GEO_ENV" $GEO_ENV
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_PROFILE_ASSUME_ROLE" $AWS_PROFILE_ASSUME_ROLE
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_SECURITY_TOKEN" $AWS_SESSION_TOKEN
+  set-redis "${AWS_ACCOUNT_NAME}/AWS_STS_ROLE_ARN" $role_arn
 }
 
 # from https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
