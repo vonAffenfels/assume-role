@@ -47,8 +47,7 @@ start-redis(){
   then return
   fi
 
-  docker run --name assume-role-redis --network assume-role-redis-network -v "assume-role-redis-volume:/data" --restart always -d redis:7.2 2>&1 > /dev/null
-  redis-cli config set notify-keyspace-events KEA
+  docker run --name assume-role-redis --network assume-role-redis-network -v "assume-role-redis-volume:/data" --restart always -d redis:7.2 redis-server --notify-keyspace-events KEA 2>&1 > /dev/null
 }
 
 set-redis() {
