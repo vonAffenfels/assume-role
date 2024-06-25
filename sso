@@ -1,0 +1,62 @@
+#!/bin/bash
+
+sso() {
+  unset AWS_PROFILE
+  unset AWS_REGION
+  unset AWS_DEFAULT_REGION
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_SESSION_TOKEN
+  unset AWS_SECURITY_TOKEN
+  unset KUBECONFIG
+  unset AWS_ACCOUNT_ID
+  unset AWS_ACCOUNT_ROLE
+  unset AWS_ACCOUNT_NAME
+  unset AWS_ROLE_NAME
+  unset AWS_SESSION_START
+
+  export AWS_PROFILE="${1}"
+  export AWS_PAGER="cat"
+  export KUBECONFIG="$HOME/.kube/$AWS_PROFILE"
+  touch $KUBECONFIG
+  # SSO check Login or relogin
+  (set -e; set +x; aws sts get-caller-identity)
+  if [[ $? -ne 0 ]]; then
+    echo "Logging into SSO"
+    SOURCE_PROFILE_TMP=$(aws configure get source_profile --profile ${AWS_PROFILE})
+    if [[ -z $SOURCE_PROFILE_TMP ]]; then
+      SOURCE_PROFILE=$AWS_PROFILE
+    else
+      SOURCE_PROFILE=$SOURCE_PROFILE_TMP
+    fi
+    aws sso login --profile ${SOURCE_PROFILE}
+  fi
+  # EKS
+  echo "󱃾 Looking up Kubernetes clusters"
+  for REGION in `aws --output json --region eu-central-1 ec2 describe-regions --filters Name=opt-in-status,Values=opt-in-not-required,opted-in | jq --raw-output -c '.Regions[].RegionName'`
+  do
+    for CLUSTER in $(aws --output json --region $REGION eks list-clusters --query 'clusters[*]' --output json | jq --raw-output -c '.[]')
+    do
+      echo "Found: Region $REGION Cluster $CLUSTER"
+      aws --output json --region $REGION eks update-kubeconfig --name $CLUSTER --profile $AWS_PROFILE --alias $CLUSTER
+    done
+  done
+  chmod 0600 $KUBECONFIG
+  yq -i 'del(.current-context)' $KUBECONFIG
+}
+
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+  # If the script is being sourced, do nothing
+  # Supports `source $(which assume_role)` in rc file for bash and zsh
+  : # noop
+elif [[ "init" == "${1}" ]]; then
+  # TODO: This will be multi-shell support like rbenv, e.g. fish
+  # Supports `eval "$(assume-role-okta init -)"` in rc file
+  echo "Currently not supported"
+else
+  # The script is being called directly
+  # Supports calling being called like eval $(assume-role-okta account role [token])
+  set -eo pipefail
+  OUTPUT_TO_EVAL="true"
+  sso "$@";
+fi
