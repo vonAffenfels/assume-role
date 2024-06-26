@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set +m
 sso() {
   unset AWS_PROFILE
   unset AWS_REGION
@@ -24,7 +24,7 @@ sso() {
   # SSO check Login or relogin
   (set -e; aws sts get-caller-identity > /dev/null 2>/dev/null)
   if [[ $? -ne 0 ]]; then
-    echo "Logging into SSO"
+    echo " Logging into SSO"
     SOURCE_PROFILE_TMP=$(aws configure get source_profile --profile ${AWS_PROFILE})
     if [[ -z $SOURCE_PROFILE_TMP ]]; then
       SOURCE_PROFILE=$AWS_PROFILE
@@ -32,19 +32,27 @@ sso() {
       SOURCE_PROFILE=$SOURCE_PROFILE_TMP
     fi
     aws sso login --profile ${SOURCE_PROFILE}
+  else
+    echo " Already logged into SSO"
   fi
   # EKS
   echo "󱃾 Looking up Kubernetes clusters"
   for REGION in `aws --output json --region eu-central-1 ec2 describe-regions --filters Name=opt-in-status,Values=opt-in-not-required,opted-in | jq --raw-output -c '.Regions[].RegionName'`
   do
-    for CLUSTER in $(aws --output json --region $REGION eks list-clusters --query 'clusters[*]' --output json | jq --raw-output -c '.[]')
-    do
-      echo "Found: Region $REGION Cluster $CLUSTER"
-      aws --output json --region $REGION eks update-kubeconfig --name $CLUSTER --profile $AWS_PROFILE --alias $CLUSTER
-    done
+    eks_regional_generate &
   done
   chmod 0600 $KUBECONFIG
+  wait
   yq -i 'del(.current-context)' $KUBECONFIG
+}
+
+eks_regional_generate() {
+  for CLUSTER in $(aws --output json --region $REGION eks list-clusters --query 'clusters[*]' --output json | jq --raw-output -c '.[]')
+  do
+    echo "Found: Region $REGION Cluster $CLUSTER"
+    aws --output json --region $REGION eks update-kubeconfig --name $CLUSTER --profile $AWS_PROFILE --alias $CLUSTER &
+  done
+  wait
 }
 
 if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
