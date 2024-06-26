@@ -1,6 +1,12 @@
 #!/bin/bash
 set +m
 sso() {
+  for tools in "jq" "aws" "yq"; do
+    if ! hash $tools 2>/dev/null; then
+      echo "sso requires '$tools' to be installed"
+      return
+    fi
+  done
   unset AWS_PROFILE
   unset AWS_REGION
   unset AWS_DEFAULT_REGION
@@ -15,11 +21,21 @@ sso() {
   unset AWS_ROLE_NAME
   unset AWS_SESSION_START
 
-  export AWS_PROFILE="${1}" # TODO: Validate that exists, isn't empty or the likes?
+  export AWS_ROLE_SESSION_NAME="$USER"
+  export AWS_PROFILE="${1}"
+  if [[ -z $AWS_PROFILE ]]; then
+    echo "Usage: sso <profile>"
+    return 1
+  fi
+  if [[ $(aws configure --profile $AWS_PROFILE list) && $? -ne 0 ]]; then
+    echo "Profile $AWS_PROFILE doesn't seem to exist"
+    return 1
+  fi
   export AWS_PAGER="cat"
   export AWS_REGION=$(aws configure get region --profile ${AWS_PROFILE}) # TODO Validate it has one?
   export AWS_DEFAULT_REGION=$AWS_REGION
   export KUBECONFIG="$HOME/.kube/$AWS_PROFILE"
+  rm -f $KUBECONFIG
   touch $KUBECONFIG
   # SSO check Login or relogin
   (set -e; aws sts get-caller-identity > /dev/null 2>/dev/null)
