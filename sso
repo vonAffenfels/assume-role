@@ -27,7 +27,7 @@ sso() {
     echo "Usage: sso <profile>"
     return 1
   fi
-  if [[ $(aws configure --profile $AWS_PROFILE list) && $? -ne 0 ]]; then
+  if [[ $(cat ~/.aws/config | grep -F "[profile $AWS_PROFILE]") && $? -ne 0 ]]; then
     echo "Profile $AWS_PROFILE doesn't seem to exist"
     return 1
   fi
