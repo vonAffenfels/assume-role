@@ -7,7 +7,19 @@ sso() {
       return
     fi
   done
-  unset AWS_PROFILE
+  
+  if [[ -z ${1} ]]; then
+    if [[ -z $AWS_PROFILE ]]; then
+      echo "Usage: sso <profile>"
+      return 1
+    else
+      echo "Using previous profile $AWS_PROFILE in absence of a profile argument"
+      export AWS_PROFILE="$AWS_PROFILE"
+    fi
+  else
+    export AWS_PROFILE="${1}"
+  fi
+
   unset AWS_REGION
   unset AWS_DEFAULT_REGION
   unset AWS_ACCESS_KEY_ID
@@ -22,7 +34,7 @@ sso() {
   unset AWS_SESSION_START
 
   export AWS_ROLE_SESSION_NAME="$USER"
-  export AWS_PROFILE="${1}"
+  
   if [[ -z $AWS_PROFILE ]]; then
     echo "Usage: sso <profile>"
     return 1
@@ -36,6 +48,9 @@ sso() {
   export AWS_REGION=$(aws configure get region --profile ${AWS_PROFILE}) # TODO Validate it has one?
   export AWS_DEFAULT_REGION=$AWS_REGION
   export KUBECONFIG="$HOME/.kube/$AWS_PROFILE"
+  if [[ -f $KUBECONFIG ]]; then
+    PREVIOUS_CONTEXT=$(cat $KUBECONFIG | yq '.current-context')
+  fi
   rm -f $KUBECONFIG
   touch $KUBECONFIG
   # SSO check Login or relogin
@@ -60,7 +75,11 @@ sso() {
   done
   chmod 0600 $KUBECONFIG
   wait
-  yq -i 'del(.current-context)' $KUBECONFIG
+  if [[ $PREVIOUS_CONTEXT != "null" ]]; then
+    yq -i ".current-context = \"$PREVIOUS_CONTEXT\"" $KUBECONFIG
+  elif [[ $(cat $KUBECONFIG | yq '.clusters | length') -gt 1 ]]; then
+    yq -i 'del(.current-context)' $KUBECONFIG
+  fi
 }
 
 eks_regional_generate() {
