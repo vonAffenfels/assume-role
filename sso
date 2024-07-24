@@ -32,6 +32,7 @@ sso() {
   unset AWS_ACCOUNT_NAME
   unset AWS_ROLE_NAME
   unset AWS_SESSION_START
+  unset PREVIOUS_CONTEXT
 
   export AWS_ROLE_SESSION_NAME="$USER"
   
@@ -75,9 +76,12 @@ sso() {
   done
   chmod 0600 $KUBECONFIG
   wait
-  if [[ $PREVIOUS_CONTEXT != "null" ]]; then
+  if [[ ! -z $PREVIOUS_CONTEXT && $PREVIOUS_CONTEXT != "null" ]]; then
+    echo "󱃾 Switching back to previously set EKS context $PREVIOUS_CONTEXT"
     yq -i ".current-context = \"$PREVIOUS_CONTEXT\"" $KUBECONFIG
+    unset PREVIOUS_CONTEXT
   elif [[ $(cat $KUBECONFIG | yq '.clusters | length') -gt 1 ]]; then
+    echo "󱃾 No previous context set and multiple EKS found, unsetting context"
     yq -i 'del(.current-context)' $KUBECONFIG
   fi
 }
